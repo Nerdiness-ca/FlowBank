@@ -2,15 +2,24 @@
 
 import React from 'react';
 import { usePathname } from 'next/navigation';
-import { useTenant } from '@/components/providers/TenantProvider';
+import { useTenant, useTenantLoading } from '@/components/providers/TenantProvider';
 import { sidebarRoutes, Route } from '@/utils/routes';
-import { ShieldAlert } from 'lucide-react';
+import { ShieldAlert, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 
 export function RouteGuard({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const tenant = useTenant();
+  const isLoading = useTenantLoading();
+
+  if (isLoading) {
+    return (
+      <div className="flex-1 flex items-center justify-center h-full">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   // Recursive function to trace the route hierarchy and collect all feature keys
   const findFeatureKeys = (routes: Route[], path: string, currentKeys: string[] = []): string[] | null => {

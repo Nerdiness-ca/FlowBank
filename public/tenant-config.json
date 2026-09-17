@@ -17,33 +17,6 @@
     "baseUrl": "https://api.flowbank.com",
     "version": "v1"
   },
-  "features": {
-    "dashboard": true,
-    "profile": true,
-    "accountInformation": true,
-    "myAccounts": true,
-    "accountSummary": true,
-    "timeDeposits": true,
-    "statements": true,
-    "statementCr": true,
-    "statementDr": true,
-    "statementFull": true,
-    "transfers": true,
-    "transferOtherBanks": true,
-    "transferInternal": true,
-    "transferHistory": true,
-    "billPayments": true,
-    "billAirtime": true,
-    "billData": true,
-    "customerRequests": true,
-    "reqChequeBook": true,
-    "reqStopPayment": true,
-    "reqMiscellaneous": true,
-    "standingInstructions": true,
-    "manageFunds": true,
-    "createHolds": true,
-    "loans": true
-  },
   "font": "outfit",
   "advert": {
     "title": "InvestToday 3.0",
@@ -57,7 +30,6 @@
     ]
   },
   "backgroundImage": "/assets/bg-image.png",
-
   "_inactive_configs_for_reference": {
     "bank-a": {
       "id": "bank-a",
@@ -76,33 +48,6 @@
       "whatsapp": "+18001234567",
       "backgroundImage": "/assets/alpha-bg.jpg",
       "font": "poppins",
-      "features": {
-        "dashboard": true,
-        "profile": true,
-        "accountInformation": true,
-        "myAccounts": true,
-        "accountSummary": true,
-        "timeDeposits": false,
-        "statements": true,
-        "statementCr": true,
-        "statementDr": true,
-        "statementFull": false,
-        "transfers": true,
-        "transferOtherBanks": true,
-        "transferInternal": true,
-        "transferHistory": true,
-        "billPayments": true,
-        "billAirtime": true,
-        "billData": false,
-        "customerRequests": true,
-        "reqChequeBook": true,
-        "reqStopPayment": true,
-        "reqMiscellaneous": false,
-        "standingInstructions": true,
-        "manageFunds": false,
-        "createHolds": false,
-        "loans": false
-      },
       "advert": {
         "title": "Alpha Premium Perks",
         "description": "Upgrade to Alpha Premier and unlock exclusive cashback and travel perks.",
@@ -130,34 +75,7 @@
       "instagram": "https://instagram.com/betafinance",
       "whatsapp": "+18889876543",
       "backgroundImage": "/assets/beta-bg.jpg",
-      "font": "poppins",
-      "features": {
-        "dashboard": true,
-        "profile": true,
-        "accountInformation": true,
-        "myAccounts": true,
-        "accountSummary": true,
-        "timeDeposits": true,
-        "statements": true,
-        "statementCr": false,
-        "statementDr": false,
-        "statementFull": true,
-        "transfers": true,
-        "transferOtherBanks": true,
-        "transferInternal": true,
-        "transferHistory": true,
-        "billPayments": false,
-        "billAirtime": false,
-        "billData": false,
-        "customerRequests": false,
-        "reqChequeBook": false,
-        "reqStopPayment": false,
-        "reqMiscellaneous": false,
-        "standingInstructions": false,
-        "manageFunds": true,
-        "createHolds": true,
-        "loans": true
-      }
+      "font": "poppins"
     }
   }
 }

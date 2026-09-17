@@ -180,7 +180,7 @@ export default function Dashboard() {
               <span className="font-semibold text-sm text-foreground">Buy Data</span>
             </Link>
             <FeatureGuard featureKey="loans">
-              <Link href='#' className="flex flex-col items-center justify-center p-6 bg-card border border-border rounded-2xl hover:border-primary/50 hover:shadow-md transition-all group">
+              <Link href='/loans' className="flex flex-col items-center justify-center p-6 bg-card border border-border rounded-2xl hover:border-primary/50 hover:shadow-md transition-all group">
                 <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                   <CreditCard className="w-6 h-6 text-primary" />
                 </div>
