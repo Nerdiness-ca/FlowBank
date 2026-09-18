@@ -2,13 +2,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Clock, TrendingUp, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
+import Link from "next/link";
+
 export default function TimeDepositsPage() {
   return (
     <main className="h-full w-full flex flex-col gap-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Time Deposits</h2>
-        <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
-          Open New Deposit
+        <Button className="bg-primary text-primary-foreground hover:bg-primary/90" asChild>
+          <Link href="/time-deposits/create">Open New Deposit</Link>
         </Button>
       </div>
 

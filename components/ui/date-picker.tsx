@@ -97,8 +97,12 @@ export function DatePicker({ value, onChange, placeholder = "Pick a date", class
               CaptionLabel: ({ displayMonth }) => (
                 <button
                   type="button"
-                  className="text-sm font-medium hover:bg-muted px-2 py-1 rounded-md transition-colors"
-                  onClick={() => setView('months')}
+                  className="text-sm font-medium hover:bg-muted px-2 py-1 rounded-md transition-colors z-50 pointer-events-auto"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setView('months');
+                  }}
                 >
                   {format(displayMonth, "MMMM yyyy")}
                 </button>

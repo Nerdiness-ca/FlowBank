@@ -13,14 +13,6 @@ export function RouteGuard({ children }: { children: React.ReactNode }) {
   const tenant = useTenant();
   const isLoading = useTenantLoading();
 
-  if (isLoading) {
-    return (
-      <div className="flex-1 flex items-center justify-center h-full">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
   // Recursive function to trace the route hierarchy and collect all feature keys
   const findFeatureKeys = (routes: Route[], path: string, currentKeys: string[] = []): string[] | null => {
     for (const route of routes) {
@@ -37,6 +29,17 @@ export function RouteGuard({ children }: { children: React.ReactNode }) {
   };
 
   const featureKeys = findFeatureKeys(sidebarRoutes, pathname);
+
+  // Only block the UI with a spinner if this route actually requires feature validation
+  if (featureKeys && featureKeys.length > 0 && isLoading) {
+    return (
+      <div className="flex-1 flex items-center justify-center h-full">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+
 
   if (featureKeys) {
     // If ANY feature key in the parent/child chain is disabled, block access.

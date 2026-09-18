@@ -61,13 +61,13 @@ const isTokenExpired = (thresholdSeconds = 60): boolean => {
   return secondsLeft < thresholdSeconds;
 };
 
-// Get user from store cookies
 const getUserFromStore = (): string | null => {
   try {
     const userStr = getCookie(USER_ROLE_KEY);
     if (!userStr) return null;
 
-    const parsed = JSON.parse(userStr);
+    const decodedStr = decodeURIComponent(userStr);
+    const parsed = JSON.parse(decodedStr);
     return parsed?.userRec?.userId || null;
   } catch (err) {
     console.error("Invalid user format:", err);

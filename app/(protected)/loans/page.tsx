@@ -9,7 +9,7 @@ import { formatCurrency } from "@/utils/formatNumber";
 
 export default function LoansPage() {
 	return (
-		<main className='h-full w-full flex flex-col gap-6 p-6'>
+		<main className='h-full w-full flex flex-col gap-6'>
 			<div className='flex items-center justify-between'>
 				<h2 className='text-2xl font-bold'>Loan Management</h2>
 				<Link href='/loans/apply'>

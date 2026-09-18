@@ -210,86 +210,106 @@ export default function DRListing() {
   if (isLoading) return <Loading />;
 
   return (
-    <main className="h-full w-full flex flex-col gap-6 items-center md:justify-center">
-      <h2 className="text-2xl font-bold">DR Listing</h2>
+    <main className="h-full w-full flex flex-col gap-6">
+      <div className="w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <Card className="w-full shadow-sm border-border">
+          <CardHeader className="bg-muted/30 border-b pb-6">
+            <CardTitle className="text-2xl">DR Listing</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-6">
+            {error && (
+              <Alert variant="destructive" className="mb-6">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
 
-      {error && (
-        <Alert variant="destructive" className="w-[90%] md:w-1/2">
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
+            {accountHistory.length === 0 && (
+              <Form {...methods}>
+                <form
+                  onSubmit={handleSubmit(onSubmit)}
+                  className="space-y-6"
+                >
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <FormField
+                      control={control}
+                      name="accountNumber"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Select Account</FormLabel>
+                          <FormControl>
+                            <Select value={field.value} onValueChange={field.onChange}>
+                              <SelectTrigger className="h-12 bg-background">
+                                <SelectValue placeholder="Select account" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {accounts.map((account: any, index: number) => (
+                                  <SelectItem key={index} value={account.accountNumber}>
+                                    <div className="flex justify-between items-center w-full min-w-[200px]">
+                                      <span>{account.accountNumber}</span>
+                                      <span className="font-semibold text-primary ml-4">
+                                        {formatCurrency(Number(account.availBal) || 0)}
+                                      </span>
+                                    </div>
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={control}
+                      name="startDate"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-col w-full">
+                          <FormLabel>Start Date</FormLabel>
+                          <FormControl>
+                            <DatePicker 
+                              value={field.value} 
+                              onChange={field.onChange} 
+                              placeholder="Enter start date" 
+                              className="h-12"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={control}
+                      name="endDate"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-col w-full">
+                          <FormLabel>End Date</FormLabel>
+                          <FormControl>
+                            <DatePicker 
+                              value={field.value} 
+                              onChange={field.onChange} 
+                              placeholder="Enter end date" 
+                              className="h-12"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
 
-      {accountHistory.length === 0 && (
-        <Form {...methods}>
-          <form
-            onSubmit={handleSubmit(onSubmit)}
-            className="space-y-3 w-[90%] md:w-1/2 border border-border rounded-md p-6"
-          >
-            <FormField
-              control={control}
-              name="accountNumber"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Select Account</FormLabel>
-                  <FormControl>
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select account" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {accounts.map((account: any, index: number) => (
-                          <SelectItem key={index} value={account.accountNumber}>
-                            {account.accountNumber} -{" "}
-                            {formatCurrency(Number(account.availBal) || 0)}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={control}
-              name="startDate"
-              render={({ field }) => (
-                <FormItem className="flex flex-col w-full">
-                  <FormLabel>Start Date</FormLabel>
-                  <FormControl>
-                    <DatePicker 
-                      value={field.value} 
-                      onChange={field.onChange} 
-                      placeholder="Enter your start date" 
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={control}
-              name="endDate"
-              render={({ field }) => (
-                <FormItem className="flex flex-col w-full">
-                  <FormLabel>End Date</FormLabel>
-                  <FormControl>
-                    <DatePicker 
-                      value={field.value} 
-                      onChange={field.onChange} 
-                      placeholder="Enter your end date" 
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <Button type="submit" className="w-full" disabled={isPending}>
-              {isPending ? "Loading..." : "Submit"}
-            </Button>
-          </form>
-        </Form>
-      )}
+                  <div className="flex justify-end">
+                    <Button type="submit" className="w-40 font-semibold h-12" size="lg" disabled={isPending}>
+                      {isPending ? "Loading..." : "Generate"}
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
       {accountHistory.length > 0 && (
         <div className="w-full text-center mb-4">

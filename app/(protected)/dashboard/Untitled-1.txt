@@ -1,0 +1,330 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { formatCurrency } from "@/utils/formatNumber";
+import { appStore } from "@/store";
+import { ReturnAcctDetails2 } from "@/services/apiAuth";
+import Link from "next/link";
+import Image from "next/image";
+
+// Icons
+import {
+  Eye, EyeOff, Send, FileText, Smartphone,
+  ChevronRight, ChevronLeft, Landmark, Wallet,
+  Zap, Briefcase, Sliders, CreditCard, RefreshCw, Wifi
+} from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { FeatureGuard } from "@/components/guards/FeatureGuard";
+import { useTenant } from "@/components/providers/TenantProvider";
+import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
+
+// ── Static fallback when API returns nothing ──────────────────────────────────
+const FALLBACK_ACCOUNTS = [
+  { accountNumber: "0021582319", accountName: "Demo User", availBal: 1254300.5, namCurrency: "NGN", codAcctType: "SV" },
+  { accountNumber: "0031094782", accountName: "Demo User", availBal: 380000.0,  namCurrency: "NGN", codAcctType: "CK" },
+];
+
+const QUICK_ACTIONS = [
+  { label: "Transfer",    href: "/transfers/other-banks-transfers", icon: Send,       bg: "bg-blue-50",   fg: "text-blue-600" },
+  { label: "Statement",   href: "/statements/full",                 icon: FileText,   bg: "bg-emerald-50",fg: "text-emerald-600" },
+  { label: "Airtime",     href: "/payments/airtime",                icon: Smartphone, bg: "bg-orange-50", fg: "text-orange-600" },
+  { label: "Loans",       href: "/loans", featureKey: "loans",      icon: Landmark,   bg: "bg-purple-50", fg: "text-purple-600" },
+  { label: "Electricity", href: "/payments/data",                   icon: Zap,        bg: "bg-yellow-50", fg: "text-yellow-600" },
+  { label: "Payments",    href: "#",                                icon: Briefcase,  bg: "bg-pink-50",   fg: "text-pink-600" },
+  { label: "Limits",      href: "#",                                icon: Sliders,    bg: "bg-indigo-50", fg: "text-indigo-600" },
+  { label: "Cards",       href: "#",                                icon: CreditCard, bg: "bg-slate-100", fg: "text-slate-600" },
+];
+
+// Format account number for card display  e.g. 0021582319 → 0021 5823 19
+const formatAcctDisplay = (n: string) =>
+  (n || "").replace(/(.{4})/g, "$1 ").trim();
+
+export default function Dashboard() {
+  const { userData } = appStore();
+  const tenant = useTenant();
+
+  const [accounts, setAccounts] = useState<any[]>([]);
+  const [activeIdx, setActiveIdx] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [showBalance, setShowBalance] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [slideIdx, setSlideIdx] = useState(0);
+  const [carouselApi, setCarouselApi] = useState<any>(null);
+
+  // Auto-advance slider
+  useEffect(() => {
+    if (!carouselApi || !tenant.advert?.images?.length) return;
+    const t = setInterval(() => carouselApi.scrollNext(), 4500);
+    return () => clearInterval(t);
+  }, [carouselApi, tenant.advert?.images?.length]);
+
+  useEffect(() => {
+    if (!carouselApi) return;
+    carouselApi.on("select", () => setSlideIdx(carouselApi.selectedScrollSnap()));
+  }, [carouselApi]);
+
+  // Fetch accounts
+  const fetchAccounts = async () => {
+    if (!userData?.userRec || !userData?.acctCollection?.length) {
+      setIsLoading(false);
+      return;
+    }
+    try {
+      setIsLoading(true);
+      const userRec = {
+        accCode: (userData.userRec as any).accCode || userData.userRec.pAcessCode || "",
+        puserName: (userData.userRec as any).puserName || userData.userRec.pUserName || "",
+      };
+      const responses = await Promise.all(
+        userData.acctCollection.map((acct: any) =>
+          ReturnAcctDetails2(userRec, [{ customerID: acct.customerID, accountNumber: acct.accountNumber }])
+        )
+      );
+      const fetched = responses.flatMap((res, i) =>
+        res.success && res.data
+          ? res.data.map((a: any) => ({
+              accountNumber: a.accountNumber,
+              accountName: a.description,
+              availBal: a.availBal,
+              namCurrency: a.currency || "NGN",
+              codAcctType: a.type === "Current" ? "CK" : "SV",
+            }))
+          : [userData.acctCollection[i]]
+      );
+      setAccounts(fetched);
+    } catch {
+      /* fall through to fallback */
+    } finally {
+      setIsLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => { fetchAccounts(); }, [userData]);
+
+  const handleRefresh = () => { setRefreshing(true); fetchAccounts(); };
+
+  const allAccounts =
+    accounts.length ? accounts :
+    userData?.acctCollection?.length ? userData.acctCollection :
+    FALLBACK_ACCOUNTS;
+
+  const active = allAccounts[activeIdx] || allAccounts[0];
+  const prev = () => setActiveIdx(i => (i - 1 + allAccounts.length) % allAccounts.length);
+  const next = () => setActiveIdx(i => (i + 1) % allAccounts.length);
+
+  return (
+    <div className="space-y-6 pb-10">
+
+      {/* ── 1. VIRTUAL CARD HERO ────────────────────────────────────────── */}
+      <div className="relative">
+        {/* Card */}
+        <div className="relative rounded-3xl overflow-hidden shadow-2xl shadow-primary/30 h-56 bg-gradient-to-br from-primary via-primary to-accent select-none">
+
+          {/* Decorative circles */}
+          <div className="absolute -top-16 -right-16 w-72 h-72 rounded-full bg-white/5" />
+          <div className="absolute -bottom-20 -left-10 w-64 h-64 rounded-full bg-white/5" />
+          <div className="absolute top-10 right-24 w-32 h-32 rounded-full bg-primary-foreground/5" />
+
+          {/* Card grid lines */}
+          <svg className="absolute inset-0 w-full h-full opacity-5" xmlns="http://www.w3.org/2000/svg">
+            <defs><pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="white" strokeWidth="1"/></pattern></defs>
+            <rect width="100%" height="100%" fill="url(#grid)" />
+          </svg>
+
+          {/* Card content */}
+          <div className="relative z-10 h-full flex flex-col justify-between p-6 md:p-8 text-primary-foreground">
+            {/* Top row */}
+            <div className="flex items-start justify-between">
+              <div>
+                {isLoading ? (
+                  <>
+                    <Skeleton className="h-4 w-28 bg-white/20 mb-2" />
+                    <Skeleton className="h-3 w-20 bg-white/15" />
+                  </>
+                ) : (
+                  <>
+                    <p className="text-xs font-semibold uppercase tracking-widest text-primary-foreground/60 mb-0.5">
+                      {active?.codAcctType === "CK" ? "Current Account" : "Savings Account"}
+                    </p>
+                    <p className="font-bold text-base tracking-wide">
+                      {active?.accountName || "Account Holder"}
+                    </p>
+                  </>
+                )}
+              </div>
+              <div className="flex items-center gap-3">
+                {tenant.logo && (
+                  <img src={tenant.logo} alt={tenant.name} className="h-8 object-contain brightness-0 invert opacity-80" />
+                )}
+                <Wifi className="w-6 h-6 text-primary-foreground/60 rotate-90" />
+              </div>
+            </div>
+
+            {/* Balance */}
+            <div className="flex items-end justify-between">
+              <div>
+                {isLoading ? (
+                  <Skeleton className="h-10 w-48 bg-white/20" />
+                ) : (
+                  <div className="flex items-center gap-3">
+                    <p className="text-4xl font-black tracking-tight">
+                      {showBalance
+                        ? formatCurrency(Number(active?.availBal) || 0)
+                        : "₦ ••• ••• •••"}
+                    </p>
+                    <button
+                      onClick={() => setShowBalance(s => !s)}
+                      className="text-primary-foreground/60 hover:text-primary-foreground transition-colors mt-1"
+                    >
+                      {showBalance ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    </button>
+                  </div>
+                )}
+                {!isLoading && (
+                  <p className="text-sm font-mono tracking-[0.25em] mt-2 text-primary-foreground/60">
+                    {formatAcctDisplay(active?.accountNumber || "")}
+                  </p>
+                )}
+              </div>
+
+              {/* Account nav arrows */}
+              {allAccounts.length > 1 && (
+                <div className="flex items-center gap-2">
+                  <button onClick={prev} className="w-8 h-8 rounded-full bg-primary-foreground/10 hover:bg-primary-foreground/20 flex items-center justify-center transition-colors">
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <span className="text-xs text-primary-foreground/60 tabular-nums">
+                    {activeIdx + 1}/{allAccounts.length}
+                  </span>
+                  <button onClick={next} className="w-8 h-8 rounded-full bg-primary-foreground/10 hover:bg-primary-foreground/20 flex items-center justify-center transition-colors">
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Card dot indicators */}
+        {allAccounts.length > 1 && (
+          <div className="flex justify-center gap-2 mt-3">
+            {allAccounts.map((_: any, i: number) => (
+              <button
+                key={i}
+                onClick={() => setActiveIdx(i)}
+                className={`rounded-full transition-all duration-300 ${
+                  i === activeIdx ? "w-6 h-2 bg-primary" : "w-2 h-2 bg-slate-300 hover:bg-slate-400"
+                }`}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Action row under card */}
+        <div className="flex items-center gap-3 mt-4">
+          <Button asChild className="flex-1 rounded-xl font-bold h-11">
+            <Link href="/statements/full">Get Statement</Link>
+          </Button>
+          <Button asChild variant="outline" className="flex-1 rounded-xl font-bold h-11 border-primary text-primary hover:bg-primary/5">
+            <Link href="/transfers/other-banks-transfers">
+              <Send className="w-4 h-4 mr-2" /> Transfer
+            </Link>
+          </Button>
+          <button
+            onClick={handleRefresh}
+            className={`w-11 h-11 rounded-xl border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50 transition-colors flex-shrink-0 ${refreshing ? "animate-spin" : ""}`}
+          >
+            <RefreshCw className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* ── 2. QUICK ACTIONS ────────────────────────────────────────────── */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-5">Quick Actions</p>
+        <div className="grid grid-cols-4 md:grid-cols-8 gap-2">
+          {QUICK_ACTIONS.map((action) => {
+            const content = (
+              <Link
+                key={action.label}
+                href={action.href}
+                className="flex flex-col items-center gap-2 group"
+              >
+                <div className={`w-13 h-13 w-12 h-12 rounded-2xl flex items-center justify-center ${action.bg} ${action.fg} group-hover:scale-110 transition-transform duration-200`}>
+                  <action.icon className="w-5 h-5" />
+                </div>
+                <span className="text-[11px] font-semibold text-slate-500 text-center leading-tight">{action.label}</span>
+              </Link>
+            );
+            if ("featureKey" in action && action.featureKey) {
+              return <FeatureGuard key={action.label} featureKey={action.featureKey as any}>{content}</FeatureGuard>;
+            }
+            return content;
+          })}
+        </div>
+      </div>
+
+      {/* ── 3. BOTTOM GRID: Slider + Advert Card ────────────────────────── */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+        {/* Image Carousel */}
+        {tenant.advert?.images?.length ? (
+          <div className="relative rounded-2xl overflow-hidden shadow-sm border border-slate-200 h-56 group">
+            <Carousel setApi={setCarouselApi} opts={{ loop: true }} className="w-full h-full">
+              <CarouselContent className="h-full">
+                {tenant.advert.images.map((img, i) => (
+                  <CarouselItem key={i} className="relative h-56">
+                    <Image src={img} alt={`promo-${i}`} fill className="object-cover" />
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+            </Carousel>
+            {/* Gradient overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
+            {/* Controls */}
+            <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5 z-10">
+              {tenant.advert.images.map((_: string, i: number) => (
+                <button key={i} onClick={() => carouselApi?.scrollTo(i)}
+                  className={`rounded-full transition-all duration-300 ${i === slideIdx ? "w-5 h-1.5 bg-white" : "w-1.5 h-1.5 bg-white/50"}`}
+                />
+              ))}
+            </div>
+            <button onClick={() => carouselApi?.scrollPrev()} className="absolute left-3 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-black/30 hover:bg-black/60 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity">
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <button onClick={() => carouselApi?.scrollNext()} className="absolute right-3 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-black/30 hover:bg-black/60 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity">
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        ) : null}
+
+        {/* Advert CTA */}
+        {tenant.advert ? (
+          <div className="relative rounded-2xl overflow-hidden shadow-sm h-56 bg-gradient-to-br from-primary to-accent flex flex-col justify-end p-6 text-primary-foreground">
+            {/* Background decoration */}
+            <div className="absolute -top-12 -right-12 w-48 h-48 rounded-full bg-primary-foreground/5" />
+            <div className="absolute top-6 right-6 w-16 h-16 rounded-full border border-primary-foreground/20 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-full bg-primary-foreground/10 flex items-center justify-center">
+                {tenant.logo
+                  ? <img src={tenant.logo} alt="" className="h-6 object-contain brightness-0 invert opacity-70" />
+                  : <Wallet className="w-5 h-5 opacity-60" />
+                }
+              </div>
+            </div>
+            <p className="text-[11px] font-bold uppercase tracking-widest text-primary-foreground/50 mb-1 relative z-10">Featured</p>
+            <h4 className="font-black text-xl leading-tight mb-3 relative z-10">{tenant.advert.title}</h4>
+            <Button asChild size="sm" variant="outline" className="w-fit bg-primary-foreground/10 border-primary-foreground/25 text-primary-foreground hover:bg-primary-foreground/25 rounded-xl font-bold relative z-10">
+              <Link href={tenant.advert.link}>
+                {tenant.advert.buttonText} <ChevronRight className="w-3.5 h-3.5 ml-1" />
+              </Link>
+            </Button>
+          </div>
+        ) : null}
+      </div>
+
+    </div>
+  );
+}

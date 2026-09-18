@@ -97,6 +97,7 @@ const appStore = create<AppStore>()((set) => ({
     clearCookie("flowbank_app");
 
     clearCookie("flowbank_main");
+    clearCookie("flowbank_features");
 
     location.href = "/";
   },

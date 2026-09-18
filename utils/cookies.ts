@@ -14,8 +14,8 @@ export const setCookie = (
 	// Convert the expirationDate to a UTC string
 	const expires = `expires=${expirationDate.toUTCString()}`;
 
-	// Create the cookie string
-	const cookieString = `${name}=${value}; ${expires}; path=/`;
+	// Create the cookie string using encodeURIComponent
+	const cookieString = `${name}=${encodeURIComponent(value)}; ${expires}; path=/`;
 
 	// Set the cookie
 	document.cookie = cookieString;
@@ -23,15 +23,19 @@ export const setCookie = (
 
 // Function to get a cookie by name
 export const getCookie = (name: string) => {
-	const cookieString =
-		typeof document !== 'undefined' ? decodeURIComponent(document.cookie) : '';
+	const cookieString = typeof document !== 'undefined' ? document.cookie : '';
 	const cookieArray = cookieString.split(';');
 
 	for (let i = 0; i < cookieArray.length; i++) {
 		const cookie = cookieArray[i].trim();
 
 		if (cookie.startsWith(`${name}=`)) {
-			return cookie.substring(name.length + 1);
+			const value = cookie.substring(name.length + 1);
+			try {
+				return decodeURIComponent(value);
+			} catch (e) {
+				return value;
+			}
 		}
 	}
 

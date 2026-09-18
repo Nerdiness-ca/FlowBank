@@ -2,18 +2,17 @@
 
 import { useEffect, useState } from 'react';
 import { format } from 'date-fns';
+import { MessageSquareText } from 'lucide-react';
 
-// form
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-
-// query
 import { useQuery, useMutation } from '@tanstack/react-query';
 
-// components
 import { Loading } from '@/components/Loader';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
 	Form,
 	FormControl,
@@ -22,7 +21,6 @@ import {
 	FormLabel,
 	FormMessage,
 } from '@/components/ui/form';
-import { Textarea } from '@/components/ui/textarea';
 import {
 	Select,
 	SelectContent,
@@ -31,28 +29,36 @@ import {
 	SelectValue,
 } from '@/components/ui/select';
 
-// store
 import { appStore } from '@/store';
-
-// utils
 import { formatCurrency } from '@/utils/formatNumber';
-
-// services
 import { saveMessageDetails, ReturnAcctDetails2 } from '@/services/api';
+import { useToast } from '@/hooks/use-toast';
+
+const miscellaneousSchema = z.object({
+	messageTypeId: z.string().min(1, 'Please enter your message type id'),
+	messageDate: z.string().min(1, 'Please enter your message date'),
+	messageStatus: z.string().min(1, 'Please enter your message status'),
+	messageSenderName: z.string().min(1, 'Please enter your message sender name'),
+	messageSenderEmail: z.string().min(1, 'Please enter your message sender email'),
+	messageSenderPhone: z.number().min(1, 'Please enter your message sender phone'),
+	messageSenderCustId: z.number().min(1, 'Please enter your message sender cust id'),
+	account: z.string().min(1, 'Please select an account'),
+	message: z.string().min(1, 'Please enter your message'),
+});
+
+type MiscFormValues = z.infer<typeof miscellaneousSchema>;
 
 export default function Miscellaneous() {
 	const { userData } = appStore();
+	const { toast } = useToast();
 	const [sessionID, setSessionID] = useState(null);
 
-	// session id
 	useEffect(() => {
 		async function fetchSessionID() {
 			const res = await fetch('/api/getSessionId');
 			if (res.ok) {
 				const data = await res.json();
 				setSessionID(data.sessionID);
-			} else {
-				console.error('Failed to fetch session ID');
 			}
 		}
 		fetchSessionID();
@@ -60,56 +66,32 @@ export default function Miscellaneous() {
 
 	const { data, isLoading } = useQuery({
 		queryKey: ['my-accounts'],
-		queryFn: () =>
-			ReturnAcctDetails2(
-				2,
-				userData?.userRec,
-				userData?.acctCollection?.AcctStruct
-			),
+		queryFn: () => ReturnAcctDetails2(2, userData?.userRec, userData?.acctCollection?.AcctStruct),
 		enabled: !!userData?.acctCollection?.AcctStruct,
 	});
 
 	const { mutate, isPending } = useMutation({
 		mutationFn: (data: any) => saveMessageDetails(data),
-		onSuccess: (res: any) => {
-			console.log(res);
+		onSuccess: () => {
+			toast({
+				title: "Message Sent",
+				description: "Your miscellaneous request has been submitted securely.",
+			});
 		},
 	});
 
-	const miscellaneousSchema = z.object({
-		messageTypeId: z.string().min(1, 'Please enter your message type id'),
-		messageDate: z.string().min(1, 'Please enter your message date'),
-		messageStatus: z.string().min(1, 'Please enter your message status'),
-		messageSenderName: z
-			.string()
-			.min(1, 'Please enter your message sender name'),
-		messageSenderEmail: z
-			.string()
-			.min(1, 'Please enter your message sender email'),
-		messageSenderPhone: z
-			.number()
-			.min(1, 'Please enter your message sender phone'),
-		messageSenderCustId: z
-			.number()
-			.min(1, 'Please enter your message sender cust id'),
-		account: z.string().min(1, 'Please select an account'),
-		message: z.string().min(1, 'Please enter your message'),
-	});
-
-	const defaultValues = {
-		messageTypeId: '',
-		messageDate: '',
-		messageStatus: '',
-		messageSenderName: '',
-		messageSenderEmail: '',
-		messageSenderPhone: '',
-		messageSenderCustId: '',
-		account: '',
-		message: '',
-	};
-
-	const methods = useForm({
-		defaultValues,
+	const methods = useForm<MiscFormValues>({
+		defaultValues: {
+			messageTypeId: '',
+			messageDate: '',
+			messageStatus: '',
+			messageSenderName: '',
+			messageSenderEmail: '',
+			messageSenderPhone: 0,
+			messageSenderCustId: 0,
+			account: '',
+			message: '',
+		},
 		resolver: zodResolver(miscellaneousSchema),
 	});
 
@@ -120,94 +102,99 @@ export default function Miscellaneous() {
 			setValue('messageTypeId', `MiscRequest|${sessionID}`);
 			setValue('messageDate', format(new Date(), 'dd-MM-yyyy'));
 			setValue('messageStatus', 'Pending');
-			setValue(
-				'messageSenderName',
-				userData.acctCollection.AcctStruct[1].cod_acct_title as string
-			);
-			setValue(
-				'messageSenderEmail',
-				userData.acctCollection.AcctStruct[1].Email as string
-			);
-			setValue(
-				'messageSenderPhone',
-				userData.acctCollection.AcctStruct[1].Gsm as any
-			);
-			setValue(
-				'messageSenderCustId',
-				userData.acctCollection.AcctStruct[1].CustomerID as any
-			);
+			setValue('messageSenderName', userData.acctCollection.AcctStruct[1].cod_acct_title as string);
+			setValue('messageSenderEmail', userData.acctCollection.AcctStruct[1].Email as string);
+			setValue('messageSenderPhone', userData.acctCollection.AcctStruct[1].Gsm as any);
+			setValue('messageSenderCustId', userData.acctCollection.AcctStruct[1].CustomerID as any);
 		}
 	}, [data, sessionID, userData, setValue]);
 
-	const onSubmit = async (data: any) => {
+	const onSubmit = async (formData: MiscFormValues) => {
 		const newData = {
-			...data,
-			messageBody: `Miscellaneous Request from User with Acct No:${data.account}|.Details are as follows: ${data.message}`,
+			...formData,
+			messageBody: `Miscellaneous Request from User with Acct No:${formData.account}|.Details are as follows: ${formData.message}`,
 		};
-
 		mutate(newData);
 	};
 
 	if (isLoading) return <Loading />;
 
 	return (
-		<main className='h-full w-full flex flex-col gap-6 items-center md:justify-center'>
-			<h2 className='text-2xl font-bold'>Miscellaneous Requests</h2>
+		<div className="max-w-3xl w-full space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+			<div className="flex flex-col gap-2">
+				<h1 className="text-3xl font-bold text-foreground tracking-tight">Miscellaneous Requests</h1>
+				<p className="text-muted-foreground">Send a secure custom message or query to our customer support team.</p>
+			</div>
 
-			<Form {...methods}>
-				<form
-					onSubmit={handleSubmit(onSubmit)}
-					className='space-y-3 w-[90%] md:w-1/2 border border-border rounded-md p-6'
-				>
-					<FormField
-						control={methods.control}
-						name='account'
-						render={({ field }) => (
-							<FormItem>
-								<FormLabel>Select Account</FormLabel>
-								<FormControl>
-									<Select onValueChange={field.onChange} value={field.value}>
-										<SelectTrigger>
-											<SelectValue placeholder='Select Source Account' />
-										</SelectTrigger>
-										<SelectContent>
-											{data?.data?.map((account: any, index: number) => (
-												<SelectItem key={index} value={account.accountNumber}>
-													{account.accountNumber} -{' '}
-													{formatCurrency(account.bookBalance)}
-												</SelectItem>
-											))}
-										</SelectContent>
-									</Select>
-								</FormControl>
-								<FormMessage />
-							</FormItem>
-						)}
-					/>
+			<Card className="border border-border shadow-sm overflow-hidden rounded-2xl">
+				<CardHeader className="bg-muted/30 border-b border-border px-6 py-5">
+					<div className="flex items-center gap-3">
+						<div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+							<MessageSquareText className="w-5 h-5 text-primary" />
+						</div>
+						<div>
+							<CardTitle className="text-lg">Secure Message</CardTitle>
+							<CardDescription>Select the related account and draft your message.</CardDescription>
+						</div>
+					</div>
+				</CardHeader>
 
-					<FormField
-						control={methods.control}
-						name='message'
-						render={({ field }) => (
-							<FormItem>
-								<FormLabel>Message</FormLabel>
-								<FormControl>
-									<Textarea
-										{...field}
-										placeholder='Enter your message'
-										className='resize-none'
-									/>
-								</FormControl>
-								<FormMessage />
-							</FormItem>
-						)}
-					/>
+				<CardContent className="p-6 sm:p-8">
+					<Form {...methods}>
+						<form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+							
+							<FormField
+								control={methods.control}
+								name='account'
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>Related Account</FormLabel>
+										<FormControl>
+											<Select onValueChange={field.onChange} value={field.value}>
+												<SelectTrigger className="bg-background">
+													<SelectValue placeholder='Select Source Account' />
+												</SelectTrigger>
+												<SelectContent>
+													{data?.data?.map((account: any, index: number) => (
+														<SelectItem key={index} value={account.accountNumber}>
+															{account.accountNumber} - {formatCurrency(account.bookBalance)}
+														</SelectItem>
+													))}
+												</SelectContent>
+											</Select>
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
 
-					<Button className='w-full font-semibold mt-3' type='submit'>
-						{isPending ? '...' : 'Submit'}
-					</Button>
-				</form>
-			</Form>
-		</main>
+							<FormField
+								control={methods.control}
+								name='message'
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>Message Content</FormLabel>
+										<FormControl>
+											<Textarea
+												{...field}
+												placeholder='Enter your detailed request or query here...'
+												className='resize-none min-h-[150px] bg-background'
+											/>
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+
+							<div className="pt-4 flex justify-end">
+								<Button className='w-full sm:w-auto min-w-[200px]' type='submit' disabled={isPending}>
+									{isPending ? 'Sending...' : 'Send Secure Message'}
+								</Button>
+							</div>
+						</form>
+					</Form>
+				</CardContent>
+			</Card>
+		</div>
 	);
 }

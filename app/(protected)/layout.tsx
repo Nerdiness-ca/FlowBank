@@ -12,29 +12,31 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col h-screen overflow-hidden">
-      {/* Navbar */}
-      <Navbar />
-
-      <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar (Desktop) */}
-        <div className="hidden md:block md:w-60 border-r bg-card overflow-y-auto">
-          <Sidebar />
-        </div>
-
-        {/* Main Content (takes remaining width) */}
-        <div className="flex-1 flex flex-col overflow-hidden">
-          {/* Page Content */}
-          <main className="flex-1 flex flex-col gap-4 p-4 md:gap-6 md:p-6 overflow-auto">
-            <RouteGuard>
-              {children}
-            </RouteGuard>
-          </main>
-        </div>
+    <div className="flex h-screen w-full overflow-hidden bg-gray-50">
+      {/* Sidebar (Desktop) - Full height */}
+      <div className="hidden md:flex flex-col h-full flex-shrink-0 z-20">
+        <Sidebar />
       </div>
 
-      {/* Footer */}
-      <Footer />
+      {/* Right Column - Topbar, Main Content, Footer */}
+      <div className="flex-1 flex flex-col h-full overflow-hidden relative">
+        {/* Navbar */}
+        <div className="flex-shrink-0 z-10">
+          <Navbar />
+        </div>
+
+        {/* Main Content Area */}
+        <main className="flex-1 overflow-y-auto hide-scrollbar p-4 md:p-6 pb-20">
+          <RouteGuard>
+            {children}
+          </RouteGuard>
+        </main>
+
+        {/* Footer */}
+        <div className="absolute bottom-0 w-full z-10 bg-white">
+          <Footer />
+        </div>
+      </div>
     </div>
   );
 }
